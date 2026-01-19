@@ -1,0 +1,39 @@
+# UBI 10 build container that:
+# 1) downloads any Red Hat package SRPM from enabled repos
+# 2) applies patches you provide
+# 3) rebuilds the RPMs
+#
+# Usage:
+#   docker build -f Dockerfile.ubi10 -t rpm-builder .
+#   docker run --rm -v "$PWD/out/10:/out" -v "$PWD/patches/10/<pkg>:/patches:ro" rpm-builder <package-name>
+#
+# Patches are organized by UBI version and package: ./patches/10/<package-name>/*.patch
+# Patches are mounted at runtime, not baked into the image.
+
+FROM registry.access.redhat.com/ubi10/ubi
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Build tooling + helpers to fetch SRPM + build deps
+# Required packages - core build tools
+RUN dnf -y update && \
+    dnf -y install \
+      rpm-build rpmdevtools dnf-plugins-core \
+      gcc gcc-c++ make git which file findutils \
+      diffutils patch tar gzip bzip2 xz \
+      python3 curl wget \
+      autoconf automake libtool pkgconfig && \
+    dnf -y clean all
+
+# Optional packages (may not be available in UBI - install what's available)
+RUN dnf -y install gettext cmake docbook-style-xsl libxslt 2>/dev/null || true
+
+# Where you'll mount artifacts and patches
+VOLUME ["/out"]
+VOLUME ["/patches"]
+
+# Copy the build script
+COPY build-rpm.sh /usr/local/bin/build-rpm.sh
+RUN chmod +x /usr/local/bin/build-rpm.sh
+
+ENTRYPOINT ["/usr/local/bin/build-rpm.sh"]

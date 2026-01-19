@@ -1,0 +1,2 @@
+# This directory contains patches for the golang package.
+# Add your .patch files here, then run: ./docker-run.sh golang

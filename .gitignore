@@ -1,0 +1,70 @@
+# Build output directory
+out/
+
+# Patch files are NOT ignored - they should be committed
+# Each package has its own directory: patches/<package-name>/
+
+# RPM build artifacts (if built locally)
+*.rpm
+*.src.rpm
+rpmbuild/
+
+# Exception: Allow RPMs in CVE remediation folders
+!CVE-*/rpms/*.rpm
+
+# Exception: Include out/ folder and its contents
+!out/
+!out/**
+!out/**/*.rpm
+!out/**/*.src.rpm
+
+# Exception: Include srpm/ folder contents
+!srpm/
+!srpm/*.src.rpm
+
+# Docker
+.docker/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.*.swp
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Environment files (may contain credentials)
+.env
+.env.local
+.env.*.local
+
+# Python (if any helper scripts create these)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+
+# Shell history
+.bash_history
+.zsh_history

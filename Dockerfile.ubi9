@@ -1,0 +1,35 @@
+# UBI 9 build container that:
+# 1) downloads any Red Hat package SRPM from enabled repos
+# 2) applies patches you provide
+# 3) rebuilds the RPMs
+#
+# Usage:
+#   docker build -f Dockerfile.ubi9 -t rpm-builder-ubi9 .
+#   docker run --rm -v "$PWD/out/9:/out" -v "$PWD/patches/9/<pkg>:/patches:ro" rpm-builder-ubi9 <package-name>
+#
+# Patches are organized by UBI version and package: ./patches/9/<package-name>/*.patch
+# Patches are mounted at runtime, not baked into the image.
+
+FROM registry.access.redhat.com/ubi9/ubi
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Build tooling + helpers to fetch SRPM + build deps
+# Note: Package names may differ slightly from UBI 10
+RUN dnf -y update && \
+    dnf -y install \
+      rpm-build rpmdevtools dnf-plugins-core \
+      gcc gcc-c++ make git which file findutils \
+      diffutils patch tar gzip bzip2 xz \
+      python3 && \
+    dnf -y clean all
+
+# Where you'll mount artifacts and patches
+VOLUME ["/out"]
+VOLUME ["/patches"]
+
+# Copy the build script
+COPY build-rpm.sh /usr/local/bin/build-rpm.sh
+RUN chmod +x /usr/local/bin/build-rpm.sh
+
+ENTRYPOINT ["/usr/local/bin/build-rpm.sh"]

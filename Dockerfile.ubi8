@@ -1,0 +1,40 @@
+# UBI 8 build container that:
+# 1) downloads any Red Hat package SRPM from enabled repos
+# 2) applies patches you provide
+# 3) rebuilds the RPMs
+#
+# Usage:
+#   docker build -f Dockerfile.ubi8 -t rpm-builder-ubi8 .
+#   docker run --rm -v "$PWD/out/8:/out" -v "$PWD/patches/8/<pkg>:/patches:ro" rpm-builder-ubi8 <package-name>
+#
+# Patches are organized by UBI version and package: ./patches/8/<package-name>/*.patch
+# Patches are mounted at runtime, not baked into the image.
+
+FROM registry.access.redhat.com/ubi8/ubi
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Build tooling + helpers to fetch SRPM + build deps
+# Note: UBI 8 has different package availability than UBI 9/10
+# - rpmdevtools is in CodeReady Builder, using rpm-build only
+# - Some packages have different names or versions
+RUN dnf -y update && \
+    dnf -y install \
+      rpm-build dnf-plugins-core \
+      gcc gcc-c++ make git which file findutils \
+      diffutils patch tar gzip bzip2 xz \
+      python3 && \
+    dnf -y clean all
+
+# Create rpmbuild directory structure manually (since rpmdevtools is not available)
+RUN mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+# Where you'll mount artifacts and patches
+VOLUME ["/out"]
+VOLUME ["/patches"]
+
+# Copy the build script
+COPY build-rpm.sh /usr/local/bin/build-rpm.sh
+RUN chmod +x /usr/local/bin/build-rpm.sh
+
+ENTRYPOINT ["/usr/local/bin/build-rpm.sh"]
